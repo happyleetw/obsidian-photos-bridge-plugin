@@ -1,0 +1,10 @@
+{
+	"id": "photos-bridge",
+	"name": "Photos Bridge",
+	"version": "1.0.0",
+	"minAppVersion": "1.0.0",
+	"description": "讓您能夠直接從 macOS Photos.app 中瀏覽和插入照片/影片到您的筆記。需要搭配 Obsidian Photos Bridge App 使用。",
+	"author": "Obsidian Photos Bridge Team",
+	"authorUrl": "https://github.com/obsidian-photos-bridge",
+	"isDesktopOnly": true
+} 

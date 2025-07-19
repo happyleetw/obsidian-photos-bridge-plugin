@@ -1,0 +1,308 @@
+/* Photos Bridge Plugin Styles */
+:root {
+  --photos-bridge-thumbnail-size: 150px;
+  --photos-bridge-gap: 8px;
+  --photos-bridge-border-radius: 6px;
+  --photos-bridge-transition: all 0.2s ease;
+}
+
+/* Main view container */
+.photos-bridge-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.photos-bridge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.photos-bridge-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.photos-bridge-refresh-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: var(--photos-bridge-transition);
+}
+
+.photos-bridge-refresh-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* Search and filters */
+.photos-bridge-search {
+  padding: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.photos-bridge-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  margin-bottom: var(--photos-bridge-gap);
+}
+
+.photos-bridge-search-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.photos-bridge-filters {
+  display: flex;
+  gap: var(--photos-bridge-gap);
+}
+
+.photos-bridge-filter-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--photos-bridge-transition);
+  font-size: 12px;
+}
+
+.photos-bridge-filter-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.photos-bridge-filter-btn.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* Connection status */
+.photos-bridge-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.photos-bridge-status-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.photos-bridge-status-text.connected {
+  color: var(--text-success);
+}
+
+.photos-bridge-status-text.connecting {
+  color: var(--text-accent);
+}
+
+.photos-bridge-status-text.error {
+  color: var(--text-error);
+}
+
+.photos-bridge-status-text.disconnected {
+  color: var(--text-muted);
+}
+
+.photos-bridge-retry-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--text-error);
+  border-radius: var(--photos-bridge-border-radius);
+  background: transparent;
+  color: var(--text-error);
+  cursor: pointer;
+  font-size: 11px;
+  transition: var(--photos-bridge-transition);
+}
+
+.photos-bridge-retry-btn:hover {
+  background: var(--text-error);
+  color: var(--text-on-accent);
+}
+
+/* Grid container */
+.photos-bridge-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.photos-bridge-loading,
+.photos-bridge-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Photos grid */
+.photos-bridge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--photos-bridge-thumbnail-size), 1fr));
+  gap: var(--photos-bridge-gap);
+}
+
+/* Individual photo item */
+.photos-bridge-photo {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--photos-bridge-border-radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--photos-bridge-transition);
+  background: var(--background-secondary);
+}
+
+.photos-bridge-photo:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.photos-bridge-photo:active {
+  transform: scale(0.98);
+}
+
+/* Thumbnail image */
+.photos-bridge-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Photo overlay */
+.photos-bridge-overlay {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.photos-bridge-video-icon,
+.photos-bridge-favorite-icon {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.photos-bridge-video-icon {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.photos-bridge-favorite-icon {
+  background: rgba(255, 0, 0, 0.8);
+}
+
+/* Load more button */
+.photos-bridge-load-more {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: var(--photos-bridge-transition);
+}
+
+.photos-bridge-load-more:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* Responsive design */
+@media (max-width: 400px) {
+  .photos-bridge-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  
+  .photos-bridge-filters {
+    flex-wrap: wrap;
+  }
+  
+  .photos-bridge-header {
+    padding: 8px;
+  }
+  
+  .photos-bridge-search {
+    padding: 8px;
+  }
+}
+
+/* Dark theme adjustments */
+.theme-dark .photos-bridge-photo:hover {
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .photos-bridge-filter-btn {
+    border-width: 2px;
+  }
+  
+  .photos-bridge-photo {
+    border: 1px solid var(--background-modifier-border);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .photos-bridge-photo,
+  .photos-bridge-refresh-btn,
+  .photos-bridge-filter-btn,
+  .photos-bridge-retry-btn,
+  .photos-bridge-load-more {
+    transition: none;
+  }
+  
+  .photos-bridge-photo:hover {
+    transform: none;
+  }
+  
+  .photos-bridge-photo:active {
+    transform: none;
+  }
+}
+
+/* Scrollbar styling */
+.photos-bridge-grid-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.photos-bridge-grid-container::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+.photos-bridge-grid-container::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}
+
+.photos-bridge-grid-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+} 
