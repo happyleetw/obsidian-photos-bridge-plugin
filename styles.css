@@ -306,3 +306,55 @@
 .photos-bridge-grid-container::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 } 
+
+/* Settings styles */
+.photos-bridge-setting-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.photos-bridge-setting-item:last-child {
+  border-bottom: none;
+}
+
+.photos-bridge-setting-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.photos-bridge-setting-desc {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+/* Drag and click feedback styles */
+.photos-bridge-photo {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.photos-bridge-photo[draggable="true"] {
+  cursor: grab;
+}
+
+.photos-bridge-photo:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.photos-bridge-photo.photos-bridge-clicking {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+.photos-bridge-photo.photos-bridge-dragging {
+  opacity: 0.6;
+  transform: scale(0.95);
+  cursor: grabbing;
+  z-index: 1000;
+}
+
+.photos-bridge-photo:active {
+  transform: scale(0.98);
+} 

@@ -228,10 +228,51 @@ export class PhotosView extends ItemView {
 			overlay.createEl('span', { cls: 'photos-bridge-favorite-icon', text: '❤️' });
 		}
 
-		// Click handler
+		// Make photo draggable
+		photoEl.draggable = true;
+		
+		// Drag event handlers
+		photoEl.addEventListener('dragstart', (e) => {
+			if (!e.dataTransfer) return;
+			
+			// Clear all existing data to prevent browser defaults
+			e.dataTransfer.clearData();
+			
+			// ONLY set our custom JSON data, no other formats
+			e.dataTransfer.setData('application/json', JSON.stringify({
+				type: 'obsidian-photos-bridge-photo',
+				photoId: photo.id,
+				filename: photo.filename,
+				mediaType: photo.mediaType
+			}));
+			
+			// Set drag effect
+			e.dataTransfer.effectAllowed = 'copy';
+			
+			// Add visual feedback
+			photoEl.classList.add('photos-bridge-dragging');
+		});
+
+		photoEl.addEventListener('dragend', () => {
+			// Remove visual feedback
+			photoEl.classList.remove('photos-bridge-dragging');
+		});
+
+		// Click handler - also keep click functionality as backup
 		photoEl.addEventListener('click', async (e) => {
 			e.preventDefault();
-			await this.insertPhoto(photo);
+			
+			// Add visual feedback
+			photoEl.classList.add('photos-bridge-clicking');
+			
+			try {
+				await this.insertPhoto(photo);
+			} finally {
+				// Remove visual feedback after a short delay
+				setTimeout(() => {
+					photoEl.classList.remove('photos-bridge-clicking');
+				}, 200);
+			}
 		});
 
 		// Context menu
