@@ -472,7 +472,40 @@ export class PhotosView extends ItemView {
 	}
 
 	private refreshPhotos() {
+		// 檢查當前開啟的筆記標題是否包含日期格式
+		const currentNote = this.app.workspace.getActiveFile();
+		if (currentNote && currentNote.name) {
+			const noteTitle = currentNote.name.replace('.md', ''); // 移除 .md 副檔名
+			const dateFromTitle = this.extractDateFromTitle(noteTitle);
+			
+			if (dateFromTitle) {
+				console.log(`從筆記標題 "${noteTitle}" 提取到日期: ${dateFromTitle}`);
+				// 設定日期篩選器並執行搜尋
+				this.uiState.filter.dateFilter = dateFromTitle;
+				this.loadPhotos(true);
+				return;
+			}
+		}
+		
+		// 如果沒有找到日期格式，清除日期篩選器並載入最新照片
+		console.log('筆記標題沒有包含日期格式，載入最新照片');
+		this.uiState.filter.dateFilter = undefined;
 		this.loadPhotos(true);
+	}
+
+	// 從標題中提取日期格式 (YYYY-MM-DD) 並轉換為 YYYY/MM/DD
+	private extractDateFromTitle(title: string): string | null {
+		// 匹配 YYYY-MM-DD 格式的日期
+		const dateRegex = /(\d{4})-(\d{1,2})-(\d{1,2})/;
+		const match = title.match(dateRegex);
+		
+		if (match) {
+			const [, year, month, day] = match;
+			// 轉換為 YYYY/MM/DD 格式
+			return `${year}/${month.padStart(2, '0')}/${day.padStart(2, '0')}`;
+		}
+		
+		return null;
 	}
 
 	private debounceSearch(query: string) {
