@@ -92,5 +92,6 @@ export interface UIState {
 	isLoading: boolean;
 	hasMore: boolean;
 	selectedPhotos: Set<string>;
+	usedPhotos: Set<string>; // 儲存已在筆記中使用的照片檔名
 	filter: MediaFilter;
 } 

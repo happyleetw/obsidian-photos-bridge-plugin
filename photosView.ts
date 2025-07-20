@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Menu } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Menu, TFolder, TFile } from 'obsidian';
 import PhotosBridgePlugin from './main';
 import { PhotoModel, MediaFilter, ConnectionStatus, UIState } from './types';
 import { BridgeAPI } from './bridgeApi';
@@ -22,6 +22,7 @@ export class PhotosView extends ItemView {
 			isLoading: false,
 			hasMore: true,
 			selectedPhotos: new Set(),
+			usedPhotos: new Set(),
 			filter: { mediaType: 'all' }
 		};
 	}
@@ -84,8 +85,8 @@ export class PhotosView extends ItemView {
 			text: '重新整理'
 		});
 		
-		refreshBtn.addEventListener('click', () => {
-			this.refreshPhotos();
+		refreshBtn.addEventListener('click', async () => {
+			await this.refreshPhotos();
 		});
 	}
 
@@ -287,6 +288,14 @@ export class PhotosView extends ItemView {
 			videoOverlay.createEl('span', { cls: 'photos-bridge-video-icon', text: '▶️' });
 		}
 
+		// Used in diary indicator (center overlay - checkmark)
+		// 比對時去除副檔名，這樣 photo.heic 就能匹配到筆記中的 photo.jpg
+		const photoNameWithoutExt = this.removeFileExtension(photo.filename);
+		if (this.uiState.usedPhotos.has(photoNameWithoutExt)) {
+			const usedOverlay = photoEl.createEl('div', { cls: 'photos-bridge-used-overlay' });
+			usedOverlay.createEl('span', { cls: 'photos-bridge-used-icon', text: '✓' });
+		}
+
 		// Make photo draggable
 		photoEl.draggable = true;
 		
@@ -472,7 +481,7 @@ export class PhotosView extends ItemView {
 		await this.loadPhotos(false);
 	}
 
-	private refreshPhotos() {
+	private async refreshPhotos() {
 		// 檢查當前開啟的筆記標題是否包含日期格式
 		const currentNote = this.app.workspace.getActiveFile();
 		if (currentNote && currentNote.name) {
@@ -481,9 +490,11 @@ export class PhotosView extends ItemView {
 			
 			if (dateFromTitle) {
 				console.log(`從筆記標題 "${noteTitle}" 提取到日期: ${dateFromTitle}`);
+				// 掃描對應的日記目錄
+				await this.scanDiaryNotesForMediaUsage(dateFromTitle);
 				// 設定日期篩選器並執行搜尋（日期搜尋不需要強制重新整理，因為它總是即時查詢）
 				this.uiState.filter.dateFilter = dateFromTitle;
-				this.loadPhotos(true);
+				await this.loadPhotos(true);
 				return;
 			}
 		}
@@ -491,7 +502,8 @@ export class PhotosView extends ItemView {
 		// 如果沒有找到日期格式，清除日期篩選器並強制重新載入最新照片
 		console.log('筆記標題沒有包含日期格式，強制重新載入最新照片');
 		this.uiState.filter.dateFilter = undefined;
-		this.loadPhotos(true, true); // reset = true, forceRefresh = true
+		this.uiState.usedPhotos.clear(); // 清空使用標記
+		await this.loadPhotos(true, true); // reset = true, forceRefresh = true
 	}
 
 	// 從標題中提取日期格式 (YYYY-MM-DD) 並轉換為 YYYY/MM/DD
@@ -509,14 +521,110 @@ export class PhotosView extends ItemView {
 		return null;
 	}
 
+	// 掃描 Me/Diary 目錄下對應日期的筆記，檢查媒體使用情況
+	private async scanDiaryNotesForMediaUsage(dateStr: string): Promise<void> {
+		// 清空之前的掃描結果
+		this.uiState.usedPhotos.clear();
+		
+		try {
+			// 解析日期格式 YYYY/MM/DD
+			const dateParts = dateStr.split('/');
+			if (dateParts.length !== 3) return;
+			
+			const [year, month] = dateParts;
+			const diaryPath = `Me/Diary/${year}/${year}-${month}`;
+			
+			console.log(`掃描目錄: ${diaryPath}`);
+			
+			// 檢查目錄是否存在
+			const diaryFolder = this.app.vault.getAbstractFileByPath(diaryPath);
+			if (!diaryFolder) {
+				console.log(`目錄不存在: ${diaryPath}`);
+				return;
+			}
+			
+			// 確保是資料夾類型
+			if (!(diaryFolder instanceof TFolder)) {
+				console.log(`${diaryPath} 不是資料夾`);
+				return;
+			}
+			
+			// 掃描該目錄下的所有 markdown 檔案
+			for (const file of diaryFolder.children) {
+				if (file instanceof TFile && file.path.endsWith('.md')) {
+					try {
+						const content = await this.app.vault.read(file);
+						const usedMedia = this.extractMediaReferencesFromContent(content);
+						
+						// 將找到的媒體檔名加入 usedPhotos
+						usedMedia.forEach(filename => {
+							this.uiState.usedPhotos.add(filename);
+							console.log(`找到使用的媒體: ${filename} (去除副檔名後，在 ${file.path})`);
+						});
+					} catch (error) {
+						console.error(`讀取檔案失敗: ${file.path}`, error);
+					}
+				}
+			}
+			
+			console.log(`掃描完成，找到 ${this.uiState.usedPhotos.size} 個已使用的媒體檔案`);
+			
+		} catch (error) {
+			console.error('掃描日記目錄失敗:', error);
+		}
+	}
+	
+	// 從筆記內容中提取媒體引用
+	private extractMediaReferencesFromContent(content: string): string[] {
+		const mediaFiles: string[] = [];
+		
+		// 匹配格式：![[檔名.jpg]] 或 ![[檔名.mov]]
+		const wikiLinkRegex = /!\[\[([^[\]]+\.(jpg|jpeg|png|gif|bmp|webp|svg|mov|mp4|avi|mkv|webm|m4v))\]\]/gi;
+		let match;
+		while ((match = wikiLinkRegex.exec(content)) !== null) {
+			// 提取檔名，去除副檔名
+			const fullFilename = match[1];
+			const filenameWithoutExt = this.removeFileExtension(fullFilename);
+			mediaFiles.push(filenameWithoutExt);
+		}
+		
+		// 匹配格式：![檔名](https://domain/path/檔名.jpg) 或 ![檔名](https://domain/path/檔名.mov)
+		const markdownLinkRegex = /!\[[^\]]*\]\(([^)]*\/([^/)]+\.(jpg|jpeg|png|gif|bmp|webp|svg|mov|mp4|avi|mkv|webm|m4v)))\)/gi;
+		while ((match = markdownLinkRegex.exec(content)) !== null) {
+			// 提取檔名部分 (group 2 是檔名)，然後去除副檔名
+			const fullFilename = match[2];
+			const filenameWithoutExt = this.removeFileExtension(fullFilename);
+			mediaFiles.push(filenameWithoutExt);
+		}
+		
+		return mediaFiles;
+	}
+	
+	// 輔助方法：去除檔名的副檔名
+	private removeFileExtension(filename: string): string {
+		const lastDotIndex = filename.lastIndexOf('.');
+		if (lastDotIndex === -1) {
+			return filename; // 沒有副檔名
+		}
+		return filename.substring(0, lastDotIndex);
+	}
+
 	private debounceSearch(query: string) {
 		if (this.searchTimeout) {
 			clearTimeout(this.searchTimeout);
 		}
 
-		this.searchTimeout = setTimeout(() => {
+		this.searchTimeout = setTimeout(async () => {
 			this.uiState.filter.dateFilter = query || undefined;
-			this.loadPhotos(true);
+			
+			// 如果是日期格式的查詢，掃描對應的日記目錄
+			if (query && query.match(/\d{4}\/\d{2}\/\d{2}/)) {
+				await this.scanDiaryNotesForMediaUsage(query);
+			} else {
+				this.uiState.usedPhotos.clear(); // 清空使用標記
+			}
+			
+			await this.loadPhotos(true);
 		}, this.plugin.settings.searchDebounceMs);
 	}
 

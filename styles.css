@@ -248,6 +248,33 @@
   line-height: 1;
 }
 
+/* Used in diary overlay (center) */
+.photos-bridge-used-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
+.photos-bridge-used-icon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background: rgba(46, 204, 113, 0.9);
+  color: white;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 /* Reference detection badge */
 .photos-bridge-reference-badge {
   position: absolute;
