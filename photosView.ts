@@ -2,7 +2,6 @@ import { ItemView, WorkspaceLeaf, Menu } from 'obsidian';
 import PhotosBridgePlugin from './main';
 import { PhotoModel, MediaFilter, ConnectionStatus, UIState } from './types';
 import { BridgeAPI } from './bridgeApi';
-import { ReferenceManager } from './src/referenceDetection/ReferenceManager';
 
 export const PHOTOS_VIEW_TYPE = 'photos-bridge-view';
 
@@ -12,7 +11,6 @@ export class PhotosView extends ItemView {
 	private uiState: UIState;
 	private photos: PhotoModel[] = [];
 	private searchTimeout: NodeJS.Timeout | null = null;
-	private referenceStatus: Record<string, boolean> = {};
 
 	constructor(leaf: WorkspaceLeaf, plugin: PhotosBridgePlugin) {
 		super(leaf);
@@ -45,8 +43,6 @@ export class PhotosView extends ItemView {
 		container.empty();
 		
 		await this.renderView();
-		
-		// Initialize reference manager (already initialized in plugin)
 		
 		await this.checkConnection();
 	}
@@ -234,18 +230,7 @@ export class PhotosView extends ItemView {
 			return;
 		}
 
-		// Update reference status for current photos
-		if (this.plugin.referenceManager.isEnabled()) {
-			try {
-				this.referenceStatus = await this.plugin.referenceManager.getMediaReferenceStatus(this.photos);
-			} catch (error) {
-				console.error('[PhotosView] Failed to get reference status:', error);
-				// Continue with empty reference status
-				this.referenceStatus = {};
-			}
-		} else {
-			this.referenceStatus = {};
-		}
+
 
 		const grid = gridContainer.createEl('div', { cls: 'photos-bridge-grid' });
 
@@ -278,11 +263,7 @@ export class PhotosView extends ItemView {
 		img.src = this.bridgeApi.getThumbnailUrl(photo.id);
 		img.alt = photo.filename || 'Photo';
 
-		// Reference badge (top left - black semi-transparent with white checkmark)
-		const isReferenced = this.referenceStatus[photo.id] || false;
-		if (isReferenced) {
-			const referenceBadge = photoEl.createEl('div', { cls: 'photos-bridge-reference-badge' });
-		}
+
 
 		// Photo info overlay (top right - for date and favorite)
 		const overlay = photoEl.createEl('div', { cls: 'photos-bridge-overlay' });

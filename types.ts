@@ -1,4 +1,4 @@
-import { ReferenceDetectionSettings } from './src/referenceDetection/types';
+
 
 export interface PhotoModel {
 	id: string;
@@ -59,7 +59,6 @@ export interface PhotosBridgeSettings {
 	enableVideos: boolean;
 	showHiddenPhotos: boolean;
 	searchDebounceMs: number;
-	referenceDetection: ReferenceDetectionSettings;
 }
 
 export const DEFAULT_SETTINGS: PhotosBridgeSettings = {
@@ -71,14 +70,7 @@ export const DEFAULT_SETTINGS: PhotosBridgeSettings = {
 	pageSize: 50,
 	enableVideos: true,
 	showHiddenPhotos: false,
-	searchDebounceMs: 500,
-	referenceDetection: {
-		scanFolderPath: 'Me/Diary',
-		includeSubfolders: true,
-		domainUrl: '',
-		enableDetection: true,
-		cacheExpireMinutes: 60
-	}
+	searchDebounceMs: 500
 };
 
 export interface MediaFilter {
