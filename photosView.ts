@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf, Menu } from 'obsidian';
 import PhotosBridgePlugin from './main';
 import { PhotoModel, MediaFilter, ConnectionStatus, UIState } from './types';
 import { BridgeAPI } from './bridgeApi';
+import { ReferenceManager } from './src/referenceDetection/ReferenceManager';
 
 export const PHOTOS_VIEW_TYPE = 'photos-bridge-view';
 
@@ -11,6 +12,7 @@ export class PhotosView extends ItemView {
 	private uiState: UIState;
 	private photos: PhotoModel[] = [];
 	private searchTimeout: NodeJS.Timeout | null = null;
+	private referenceStatus: Record<string, boolean> = {};
 
 	constructor(leaf: WorkspaceLeaf, plugin: PhotosBridgePlugin) {
 		super(leaf);
@@ -42,7 +44,10 @@ export class PhotosView extends ItemView {
 		const container = this.containerEl.children[1];
 		container.empty();
 		
-		this.renderView();
+		await this.renderView();
+		
+		// Initialize reference manager (already initialized in plugin)
+		
 		await this.checkConnection();
 	}
 
@@ -53,10 +58,9 @@ export class PhotosView extends ItemView {
 		}
 	}
 
-	private renderView() {
+	private async renderView() {
 		const container = this.containerEl.children[1];
 		container.empty();
-		container.addClass('photos-bridge-view');
 
 		// Header
 		this.renderHeader(container);
@@ -68,7 +72,7 @@ export class PhotosView extends ItemView {
 		this.renderConnectionStatus(container);
 
 		// Photos grid
-		this.renderPhotosGrid(container);
+		await this.renderPhotosGrid(container);
 
 		// Load more button
 		this.renderLoadMoreButton(container);
@@ -217,7 +221,7 @@ export class PhotosView extends ItemView {
 		}
 	}
 
-	private renderPhotosGrid(container: Element) {
+	private async renderPhotosGrid(container: Element) {
 		const gridContainer = container.createEl('div', { cls: 'photos-bridge-grid-container' });
 
 		if (this.uiState.isLoading && this.photos.length === 0) {
@@ -228,6 +232,19 @@ export class PhotosView extends ItemView {
 		if (this.photos.length === 0) {
 			gridContainer.createEl('div', { cls: 'photos-bridge-empty', text: '沒有找到照片' });
 			return;
+		}
+
+		// Update reference status for current photos
+		if (this.plugin.referenceManager.isEnabled()) {
+			try {
+				this.referenceStatus = await this.plugin.referenceManager.getMediaReferenceStatus(this.photos);
+			} catch (error) {
+				console.error('[PhotosView] Failed to get reference status:', error);
+				// Continue with empty reference status
+				this.referenceStatus = {};
+			}
+		} else {
+			this.referenceStatus = {};
 		}
 
 		const grid = gridContainer.createEl('div', { cls: 'photos-bridge-grid' });
@@ -261,6 +278,12 @@ export class PhotosView extends ItemView {
 		img.src = this.bridgeApi.getThumbnailUrl(photo.id);
 		img.alt = photo.filename || 'Photo';
 
+		// Reference badge (top left - black semi-transparent with white checkmark)
+		const isReferenced = this.referenceStatus[photo.id] || false;
+		if (isReferenced) {
+			const referenceBadge = photoEl.createEl('div', { cls: 'photos-bridge-reference-badge' });
+		}
+
 		// Photo info overlay (top right - for date and favorite)
 		const overlay = photoEl.createEl('div', { cls: 'photos-bridge-overlay' });
 
@@ -277,7 +300,7 @@ export class PhotosView extends ItemView {
 			overlay.createEl('span', { cls: 'photos-bridge-favorite-icon', text: '❤️' });
 		}
 
-		// Video icon overlay (bottom left - separate container)
+		// Video icon overlay (bottom right - moved from bottom left)
 		if (photo.mediaType === 'video') {
 			const videoOverlay = photoEl.createEl('div', { cls: 'photos-bridge-video-overlay' });
 			videoOverlay.createEl('span', { cls: 'photos-bridge-video-icon', text: '▶️' });
@@ -407,7 +430,7 @@ export class PhotosView extends ItemView {
 	// API Methods
 	private async checkConnection() {
 		this.uiState.connectionStatus = ConnectionStatus.CONNECTING;
-		this.renderView();
+		await this.renderView();
 
 		try {
 			const isConnected = await this.bridgeApi.testConnection();
@@ -421,7 +444,7 @@ export class PhotosView extends ItemView {
 			console.error('Connection check failed:', error);
 		}
 
-		this.renderView();
+		await this.renderView();
 	}
 
 	private async loadPhotos(reset = false) {
@@ -433,7 +456,7 @@ export class PhotosView extends ItemView {
 		}
 
 		this.uiState.isLoading = true;
-		this.renderView();
+		await this.renderView();
 
 		try {
 			let response;
@@ -475,7 +498,7 @@ export class PhotosView extends ItemView {
 		}
 
 		this.uiState.isLoading = false;
-		this.renderView();
+		await this.renderView();
 	}
 
 	private async loadMorePhotos() {

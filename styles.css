@@ -230,11 +230,45 @@
   align-items: flex-end;
 }
 
-/* Video icon - positioned at bottom left */
+/* Video overlay (moved to bottom right) */
 .photos-bridge-video-overlay {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.photos-bridge-video-icon {
+  display: inline-block;
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: var(--photos-bridge-border-radius);
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Reference detection badge */
+.photos-bridge-reference-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.photos-bridge-reference-badge::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 /* Date badge */

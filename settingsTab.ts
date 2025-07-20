@@ -164,8 +164,8 @@ export class PhotosBridgeSettingTab extends PluginSettingTab {
 		containerEl.createEl('h3', { text: '效能設定' });
 
 		new Setting(containerEl)
-			.setName('搜尋延遲')
-			.setDesc('搜尋輸入後的延遲時間（毫秒），避免過於頻繁的 API 呼叫')
+			.setName('搜尋去抖動延遲 (毫秒)')
+			.setDesc('搜尋輸入的去抖動延遲時間，避免頻繁請求')
 			.addSlider(slider => slider
 				.setLimits(100, 2000, 100)
 				.setValue(this.plugin.settings.searchDebounceMs)
@@ -175,8 +175,11 @@ export class PhotosBridgeSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		// Help section
-		containerEl.createEl('h3', { text: '說明資訊' });
+		// Reference Detection section
+		this.addReferenceDetectionSettings(containerEl);
+
+		// Usage instructions
+		containerEl.createEl('h3', { text: '使用說明' });
 
 		containerEl.createEl('div', { cls: 'setting-item-description' }, (el) => {
 			el.innerHTML = `
@@ -194,5 +197,102 @@ export class PhotosBridgeSettingTab extends PluginSettingTab {
 				</ul>
 			`;
 		});
+	}
+
+	private addReferenceDetectionSettings(containerEl: HTMLElement): void {
+		containerEl.createEl('h3', { text: '引用檢測設定' });
+
+		// Enable reference detection
+		new Setting(containerEl)
+			.setName('啟用引用檢測')
+			.setDesc('在側欄中顯示已被筆記引用的照片/影片標記')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.referenceDetection.enableDetection)
+				.onChange(async (value) => {
+					this.plugin.settings.referenceDetection.enableDetection = value;
+					await this.plugin.saveSettings();
+					// 重新載入側欄以應用變更（需要手動重新開啟側欄）
+				}));
+
+		// Scan folder path
+		new Setting(containerEl)
+			.setName('掃描資料夾路徑')
+			.setDesc('要掃描引用的資料夾路徑（相對於 Vault 根目錄）')
+			.addText(text => text
+				.setPlaceholder('Me/Diary')
+				.setValue(this.plugin.settings.referenceDetection.scanFolderPath)
+				.onChange(async (value) => {
+					this.plugin.settings.referenceDetection.scanFolderPath = value.trim();
+					await this.plugin.saveSettings();
+				}));
+
+		// Include subfolders
+		new Setting(containerEl)
+			.setName('包含子資料夾')
+			.setDesc('遞迴掃描所有子資料夾中的筆記')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.referenceDetection.includeSubfolders)
+				.onChange(async (value) => {
+					this.plugin.settings.referenceDetection.includeSubfolders = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Domain URL (optional)
+		new Setting(containerEl)
+			.setName('網域 URL（可選）')
+			.setDesc('外部媒體連結的網域 URL，例如：https://your-domain.com')
+			.addText(text => text
+				.setPlaceholder('https://your-domain.com')
+				.setValue(this.plugin.settings.referenceDetection.domainUrl || '')
+				.onChange(async (value) => {
+					this.plugin.settings.referenceDetection.domainUrl = value.trim();
+					await this.plugin.saveSettings();
+				}));
+
+		// Cache expire time
+		new Setting(containerEl)
+			.setName('快取過期時間（分鐘）')
+			.setDesc('引用檢測快取的有效時間，過期後會重新掃描')
+			.addSlider(slider => slider
+				.setLimits(10, 1440, 10) // 10分鐘到24小時
+				.setValue(this.plugin.settings.referenceDetection.cacheExpireMinutes)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.referenceDetection.cacheExpireMinutes = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Clear cache button
+		new Setting(containerEl)
+			.setName('清除引用快取')
+			.setDesc('清除已儲存的引用檢測快取，下次將重新掃描')
+			.addButton(button => button
+				.setButtonText('清除快取')
+				.setWarning()
+				.onClick(async () => {
+					const originalText = button.buttonEl.textContent;
+					button.setButtonText('清除中...');
+					button.setDisabled(true);
+
+					try {
+						const success = await this.plugin.referenceManager.clearCache();
+						if (success) {
+							button.setButtonText('已清除');
+						} else {
+							button.setButtonText('清除失敗');
+						}
+						setTimeout(() => {
+							button.setButtonText(originalText);
+							button.setDisabled(false);
+						}, 2000);
+					} catch (error) {
+						console.error('Failed to clear cache:', error);
+						button.setButtonText('清除失敗');
+						setTimeout(() => {
+							button.setButtonText(originalText);
+							button.setDisabled(false);
+						}, 2000);
+					}
+				}));
 	}
 } 

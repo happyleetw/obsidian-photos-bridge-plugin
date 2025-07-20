@@ -3,10 +3,12 @@ import { PhotosBridgeSettings, DEFAULT_SETTINGS } from './types';
 import { PhotosBridgeSettingTab } from './settingsTab';
 import { PhotosView, PHOTOS_VIEW_TYPE } from './photosView';
 import { BridgeAPI } from './bridgeApi';
+import { ReferenceManager } from './src/referenceDetection/ReferenceManager';
 
 export default class PhotosBridgePlugin extends Plugin {
 	settings: PhotosBridgeSettings;
 	bridgeApi: BridgeAPI;
+	referenceManager: ReferenceManager;
 
 	async onload() {
 		console.log('Loading Photos Bridge plugin');
@@ -16,6 +18,10 @@ export default class PhotosBridgePlugin extends Plugin {
 
 		// Initialize Bridge API
 		this.bridgeApi = new BridgeAPI(this.settings.bridgeUrl);
+
+		// Initialize Reference Manager
+		this.referenceManager = new ReferenceManager(this.app, this.settings.referenceDetection);
+		await this.referenceManager.initialize();
 
 		// Register view
 		this.registerView(
