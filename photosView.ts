@@ -182,29 +182,36 @@ export class PhotosView extends ItemView {
 		const gridContainer = container.createEl('div', { cls: 'photos-bridge-grid-container' });
 
 		if (this.uiState.isLoading && this.photos.length === 0) {
-			gridContainer.createEl('div', {
-				text: '載入中...',
-				cls: 'photos-bridge-loading'
-			});
+			gridContainer.createEl('div', { cls: 'photos-bridge-loading', text: '載入中...' });
 			return;
 		}
 
-		if (this.photos.length === 0 && !this.uiState.isLoading) {
-			gridContainer.createEl('div', {
-				text: '沒有找到照片',
-				cls: 'photos-bridge-empty'
-			});
+		if (this.photos.length === 0) {
+			gridContainer.createEl('div', { cls: 'photos-bridge-empty', text: '沒有找到照片' });
 			return;
 		}
 
 		const grid = gridContainer.createEl('div', { cls: 'photos-bridge-grid' });
 
-		this.photos.forEach(photo => {
-			this.renderPhotoThumbnail(grid, photo);
+		// Track previous date for comparison
+		let previousDate: string | null = null;
+
+		this.photos.forEach((photo, index) => {
+			const currentDate = photo.createdDate ? this.formatDateForComparison(photo.createdDate) : null;
+			const shouldShowDate = currentDate && currentDate !== previousDate;
+			
+			this.renderPhotoThumbnail(grid, photo, shouldShowDate, currentDate);
+			
+			previousDate = currentDate;
 		});
 	}
 
-	private renderPhotoThumbnail(container: Element, photo: PhotoModel) {
+	private formatDateForComparison(dateString: string): string {
+		const date = new Date(dateString);
+		return `${date.getMonth() + 1}/${date.getDate()}`;
+	}
+
+	private renderPhotoThumbnail(container: Element, photo: PhotoModel, shouldShowDate: boolean = false, dateText: string | null = null) {
 		const photoEl = container.createEl('div', { cls: 'photos-bridge-photo' });
 
 		// Thumbnail image
@@ -217,6 +224,14 @@ export class PhotosView extends ItemView {
 
 		// Photo info overlay
 		const overlay = photoEl.createEl('div', { cls: 'photos-bridge-overlay' });
+
+		// Date badge (only show if date changed)
+		if (shouldShowDate && dateText) {
+			const dateBadge = overlay.createEl('div', { 
+				cls: 'photos-bridge-date-badge',
+				text: dateText
+			});
+		}
 
 		// Media type indicator
 		if (photo.mediaType === 'video') {
