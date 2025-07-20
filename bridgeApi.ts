@@ -37,7 +37,8 @@ export class BridgeAPI {
 	async getPhotos(
 		page: number = 1, 
 		pageSize: number = 50,
-		filter?: MediaFilter
+		filter?: MediaFilter,
+		forceRefresh: boolean = false
 	): Promise<PhotosResponse> {
 		const params = new URLSearchParams();
 		params.append('page', page.toString());
@@ -45,6 +46,10 @@ export class BridgeAPI {
 		
 		if (filter?.mediaType && filter.mediaType !== 'all') {
 			params.append('mediaType', filter.mediaType);
+		}
+
+		if (forceRefresh) {
+			params.append('refresh', 'true');
 		}
 
 		const url = `${this.baseUrl}/api/photos?${params.toString()}`;

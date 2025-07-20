@@ -413,7 +413,7 @@ export class PhotosView extends ItemView {
 		await this.renderView();
 	}
 
-	private async loadPhotos(reset = false) {
+	private async loadPhotos(reset = false, forceRefresh = false) {
 		if (this.uiState.isLoading) return;
 
 		if (reset) {
@@ -436,11 +436,12 @@ export class PhotosView extends ItemView {
 					this.plugin.settings.pageSize
 				);
 			} else {
-				// Use regular photos API
+				// Use regular photos API with optional force refresh
 				response = await this.bridgeApi.getPhotos(
 					this.uiState.currentPage,
 					this.plugin.settings.pageSize,
-					this.uiState.filter
+					this.uiState.filter,
+					forceRefresh
 				);
 			}
 
@@ -480,17 +481,17 @@ export class PhotosView extends ItemView {
 			
 			if (dateFromTitle) {
 				console.log(`從筆記標題 "${noteTitle}" 提取到日期: ${dateFromTitle}`);
-				// 設定日期篩選器並執行搜尋
+				// 設定日期篩選器並執行搜尋（日期搜尋不需要強制重新整理，因為它總是即時查詢）
 				this.uiState.filter.dateFilter = dateFromTitle;
 				this.loadPhotos(true);
 				return;
 			}
 		}
 		
-		// 如果沒有找到日期格式，清除日期篩選器並載入最新照片
-		console.log('筆記標題沒有包含日期格式，載入最新照片');
+		// 如果沒有找到日期格式，清除日期篩選器並強制重新載入最新照片
+		console.log('筆記標題沒有包含日期格式，強制重新載入最新照片');
 		this.uiState.filter.dateFilter = undefined;
-		this.loadPhotos(true);
+		this.loadPhotos(true, true); // reset = true, forceRefresh = true
 	}
 
 	// 從標題中提取日期格式 (YYYY-MM-DD) 並轉換為 YYYY/MM/DD
