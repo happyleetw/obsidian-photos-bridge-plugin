@@ -49,20 +49,124 @@
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.photos-bridge-search-input {
+/* Date search section */
+.photos-bridge-date-section {
+  margin-bottom: var(--photos-bridge-gap);
+}
+
+.photos-bridge-date-input-container {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.photos-bridge-date-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+}
+
+.photos-bridge-date-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.photos-bridge-calendar-btn,
+.photos-bridge-search-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: var(--photos-bridge-transition);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.photos-bridge-calendar-btn:hover,
+.photos-bridge-search-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.photos-bridge-search-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.photos-bridge-search-btn:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* Date picker modal */
+.photos-bridge-date-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.photos-bridge-date-picker-modal {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  padding: 20px;
+  min-width: 300px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.photos-bridge-date-picker {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--photos-bridge-border-radius);
   background: var(--background-primary);
   color: var(--text-normal);
-  margin-bottom: var(--photos-bridge-gap);
+  margin-bottom: 16px;
+  font-size: 14px;
 }
 
-.photos-bridge-search-input:focus {
-  outline: none;
+.photos-bridge-date-picker-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.photos-bridge-date-picker-confirm,
+.photos-bridge-date-picker-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--photos-bridge-border-radius);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: var(--photos-bridge-transition);
+}
+
+.photos-bridge-date-picker-confirm {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
   border-color: var(--interactive-accent);
-  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.photos-bridge-date-picker-confirm:hover {
+  background: var(--interactive-accent-hover);
+}
+
+.photos-bridge-date-picker-cancel:hover {
+  background: var(--background-modifier-hover);
 }
 
 .photos-bridge-filters {
@@ -200,6 +304,13 @@
   gap: 4px;
   flex-direction: column;
   align-items: flex-end;
+}
+
+/* Video icon - positioned at bottom left */
+.photos-bridge-video-overlay {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
 }
 
 /* Date badge */

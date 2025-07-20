@@ -92,16 +92,61 @@ export class PhotosView extends ItemView {
 	private renderSearchAndFilters(container: Element) {
 		const searchContainer = container.createEl('div', { cls: 'photos-bridge-search' });
 
-		// Search input
-		const searchInput = searchContainer.createEl('input', {
+		// Date search section
+		const dateSection = searchContainer.createEl('div', { cls: 'photos-bridge-date-section' });
+		
+		// Date input
+		const dateInputContainer = dateSection.createEl('div', { cls: 'photos-bridge-date-input-container' });
+		
+		const dateInput = dateInputContainer.createEl('input', {
 			type: 'text',
-			placeholder: '搜尋照片...',
-			cls: 'photos-bridge-search-input'
+			placeholder: '輸入日期 (YYYY/MM/DD)...',
+			cls: 'photos-bridge-date-input'
 		});
 
-		searchInput.addEventListener('input', (e) => {
-			const query = (e.target as HTMLInputElement).value;
-			this.debounceSearch(query);
+		// Calendar button
+		const calendarBtn = dateInputContainer.createEl('button', {
+			cls: 'photos-bridge-calendar-btn',
+			text: '📅'
+		});
+
+		// Search button
+		const searchBtn = dateInputContainer.createEl('button', {
+			cls: 'photos-bridge-search-btn',
+			text: '搜尋'
+		});
+
+		// Date input validation and formatting
+		dateInput.addEventListener('input', (e) => {
+			const input = e.target as HTMLInputElement;
+			let value = input.value.replace(/[^\d]/g, ''); // Remove non-digits
+			
+			// Format as YYYY/MM/DD
+			if (value.length >= 4) {
+				value = value.substring(0, 4) + '/' + value.substring(4);
+			}
+			if (value.length >= 7) {
+				value = value.substring(0, 7) + '/' + value.substring(7, 9);
+			}
+			
+			input.value = value;
+		});
+
+		// Enter key to search
+		dateInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				this.performDateSearch(dateInput.value);
+			}
+		});
+
+		// Calendar button click
+		calendarBtn.addEventListener('click', () => {
+			this.showDatePicker(dateInput);
+		});
+
+		// Search button click
+		searchBtn.addEventListener('click', () => {
+			this.performDateSearch(dateInput.value);
 		});
 
 		// Filter buttons
@@ -222,7 +267,7 @@ export class PhotosView extends ItemView {
 		img.src = this.bridgeApi.getThumbnailUrl(photo.id);
 		img.alt = photo.filename || 'Photo';
 
-		// Photo info overlay
+		// Photo info overlay (top right - for date and favorite)
 		const overlay = photoEl.createEl('div', { cls: 'photos-bridge-overlay' });
 
 		// Date badge (only show if date changed)
@@ -233,14 +278,15 @@ export class PhotosView extends ItemView {
 			});
 		}
 
-		// Media type indicator
-		if (photo.mediaType === 'video') {
-			overlay.createEl('span', { cls: 'photos-bridge-video-icon', text: '▶️' });
-		}
-
-		// Favorite indicator
+		// Favorite indicator (stays in top right)
 		if (photo.isFavorite) {
 			overlay.createEl('span', { cls: 'photos-bridge-favorite-icon', text: '❤️' });
+		}
+
+		// Video icon overlay (bottom left - separate container)
+		if (photo.mediaType === 'video') {
+			const videoOverlay = photoEl.createEl('div', { cls: 'photos-bridge-video-overlay' });
+			videoOverlay.createEl('span', { cls: 'photos-bridge-video-icon', text: '▶️' });
 		}
 
 		// Make photo draggable
@@ -398,11 +444,13 @@ export class PhotosView extends ItemView {
 		try {
 			let response;
 			
-			if (this.uiState.filter.searchQuery) {
-				response = await this.bridgeApi.searchPhotos(
-					this.uiState.filter.searchQuery,
+			if (this.uiState.filter.dateFilter) {
+				// For now, we'll use the regular getPhotos method and filter client-side
+				// In a real implementation, you might want to add a date filter to the API
+				response = await this.bridgeApi.getPhotos(
 					this.uiState.currentPage,
-					this.plugin.settings.pageSize
+					this.plugin.settings.pageSize,
+					this.uiState.filter
 				);
 			} else {
 				response = await this.bridgeApi.getPhotos(
@@ -416,6 +464,19 @@ export class PhotosView extends ItemView {
 				this.photos = response.photos;
 			} else {
 				this.photos.push(...response.photos);
+			}
+
+			// Apply client-side date filter if specified
+			if (this.uiState.filter.dateFilter) {
+				this.photos = this.photos.filter(photo => {
+					if (!photo.createdDate) return false;
+					
+					const photoDate = new Date(photo.createdDate);
+					const filterDate = new Date(this.uiState.filter.dateFilter!);
+					
+					// Compare dates (ignore time)
+					return photoDate.toDateString() === filterDate.toDateString();
+				});
 			}
 
 			this.uiState.hasMore = response.hasMore;
@@ -443,9 +504,97 @@ export class PhotosView extends ItemView {
 		}
 
 		this.searchTimeout = setTimeout(() => {
-			this.uiState.filter.searchQuery = query || undefined;
+			this.uiState.filter.dateFilter = query || undefined;
 			this.loadPhotos(true);
 		}, this.plugin.settings.searchDebounceMs);
+	}
+
+	private performDateSearch(dateString: string) {
+		// Validate date format
+		if (dateString && !this.isValidDateFormat(dateString)) {
+			// Show error message or just ignore invalid format
+			console.warn('Invalid date format. Please use YYYY/MM/DD format.');
+			return;
+		}
+
+		// Update filter
+		this.uiState.filter.dateFilter = dateString || undefined;
+		
+		// Load photos with date filter
+		this.loadPhotos(true);
+	}
+
+	private isValidDateFormat(dateString: string): boolean {
+		const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
+		if (!dateRegex.test(dateString)) {
+			return false;
+		}
+
+		// Check if date is valid
+		const [year, month, day] = dateString.split('/').map(Number);
+		const date = new Date(year, month - 1, day);
+		
+		return date.getFullYear() === year && 
+			   date.getMonth() === month - 1 && 
+			   date.getDate() === day;
+	}
+
+	private showDatePicker(dateInput: HTMLInputElement) {
+		// Create a simple date picker modal
+		const modal = document.createElement('div');
+		modal.className = 'photos-bridge-date-picker-modal';
+		
+		const overlay = document.createElement('div');
+		overlay.className = 'photos-bridge-date-picker-overlay';
+		
+		const picker = document.createElement('input');
+		picker.type = 'date';
+		picker.className = 'photos-bridge-date-picker';
+		
+		// Set current value if exists
+		if (dateInput.value) {
+			const dateStr = dateInput.value.replace(/\//g, '-');
+			picker.value = dateStr;
+		}
+		
+		const buttonContainer = document.createElement('div');
+		buttonContainer.className = 'photos-bridge-date-picker-buttons';
+		
+		const confirmBtn = document.createElement('button');
+		confirmBtn.textContent = '確認';
+		confirmBtn.className = 'photos-bridge-date-picker-confirm';
+		
+		const cancelBtn = document.createElement('button');
+		cancelBtn.textContent = '取消';
+		cancelBtn.className = 'photos-bridge-date-picker-cancel';
+		
+		buttonContainer.appendChild(confirmBtn);
+		buttonContainer.appendChild(cancelBtn);
+		
+		modal.appendChild(picker);
+		modal.appendChild(buttonContainer);
+		overlay.appendChild(modal);
+		document.body.appendChild(overlay);
+		
+		// Event handlers
+		confirmBtn.addEventListener('click', () => {
+			if (picker.value) {
+				const formattedDate = picker.value.replace(/-/g, '/');
+				dateInput.value = formattedDate;
+				this.performDateSearch(formattedDate);
+			}
+			document.body.removeChild(overlay);
+		});
+		
+		cancelBtn.addEventListener('click', () => {
+			document.body.removeChild(overlay);
+		});
+		
+		overlay.addEventListener('click', (e) => {
+			if (e.target === overlay) {
+				document.body.removeChild(overlay);
+			}
+		});
 	}
 
 	private async insertPhoto(photo: PhotoModel) {

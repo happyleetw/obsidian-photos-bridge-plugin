@@ -73,7 +73,7 @@ export const DEFAULT_SETTINGS: PhotosBridgeSettings = {
 
 export interface MediaFilter {
 	mediaType?: 'image' | 'video' | 'all';
-	searchQuery?: string;
+	dateFilter?: string; // Format: YYYY/MM/DD
 	showFavorites?: boolean;
 }
 
