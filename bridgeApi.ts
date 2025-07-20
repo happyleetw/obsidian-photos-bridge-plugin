@@ -90,6 +90,33 @@ export class BridgeAPI {
 		return response.json();
 	}
 
+	// Get photos by date
+	async getPhotosByDate(
+		dateString: string,
+		page: number = 1,
+		pageSize: number = 50
+	): Promise<PhotosResponse> {
+		const params = new URLSearchParams();
+		params.append('date', dateString);
+		params.append('page', page.toString());
+		params.append('pageSize', pageSize.toString());
+
+		const url = `${this.baseUrl}/api/photos/date?${params.toString()}`;
+		
+		const response = await fetch(url, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to get photos by date: ${response.statusText}`);
+		}
+
+		return response.json();
+	}
+
 	// Get thumbnail URL
 	getThumbnailUrl(photoId: string): string {
 		return `${this.baseUrl}/api/thumbnails/${encodeURIComponent(photoId)}`;

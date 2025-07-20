@@ -445,14 +445,15 @@ export class PhotosView extends ItemView {
 			let response;
 			
 			if (this.uiState.filter.dateFilter) {
-				// For now, we'll use the regular getPhotos method and filter client-side
-				// In a real implementation, you might want to add a date filter to the API
-				response = await this.bridgeApi.getPhotos(
+				// Use the new date API for date-based search
+				console.log('Using date API for:', this.uiState.filter.dateFilter);
+				response = await this.bridgeApi.getPhotosByDate(
+					this.uiState.filter.dateFilter,
 					this.uiState.currentPage,
-					this.plugin.settings.pageSize,
-					this.uiState.filter
+					this.plugin.settings.pageSize
 				);
 			} else {
+				// Use regular photos API
 				response = await this.bridgeApi.getPhotos(
 					this.uiState.currentPage,
 					this.plugin.settings.pageSize,
@@ -466,18 +467,11 @@ export class PhotosView extends ItemView {
 				this.photos.push(...response.photos);
 			}
 
-			// Apply client-side date filter if specified
-			if (this.uiState.filter.dateFilter) {
-				this.photos = this.photos.filter(photo => {
-					if (!photo.createdDate) return false;
-					
-					const photoDate = new Date(photo.createdDate);
-					const filterDate = new Date(this.uiState.filter.dateFilter!);
-					
-					// Compare dates (ignore time)
-					return photoDate.toDateString() === filterDate.toDateString();
-				});
-			}
+			console.log('Total photos loaded:', this.photos.length);
+			console.log('Sample photo dates:', this.photos.slice(0, 3).map(p => ({ 
+				filename: p.filename, 
+				createdDate: p.createdDate 
+			})));
 
 			this.uiState.hasMore = response.hasMore;
 			this.uiState.currentPage++;
@@ -510,23 +504,35 @@ export class PhotosView extends ItemView {
 	}
 
 	private performDateSearch(dateString: string) {
-		// Validate date format
-		if (dateString && !this.isValidDateFormat(dateString)) {
-			// Show error message or just ignore invalid format
-			console.warn('Invalid date format. Please use YYYY/MM/DD format.');
+		console.log('performDateSearch called with:', dateString);
+		
+		// If empty string, clear filter
+		if (!dateString || dateString.trim() === '') {
+			console.log('Clearing date filter');
+			this.uiState.filter.dateFilter = undefined;
+			this.loadPhotos(true);
 			return;
 		}
+		
+		// Validate date format - allow more flexible formats
+		if (!this.isValidDateFormat(dateString)) {
+			console.warn('Invalid date format:', dateString, 'Please use YYYY/MM/DD format.');
+			// Don't return, let's try anyway for debugging
+		}
 
+		console.log('Setting date filter to:', dateString);
 		// Update filter
-		this.uiState.filter.dateFilter = dateString || undefined;
+		this.uiState.filter.dateFilter = dateString;
 		
 		// Load photos with date filter
 		this.loadPhotos(true);
 	}
 
 	private isValidDateFormat(dateString: string): boolean {
-		const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
+		// More flexible regex - allow M/D or MM/DD
+		const dateRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
 		if (!dateRegex.test(dateString)) {
+			console.log('Date regex failed for:', dateString);
 			return false;
 		}
 
@@ -534,9 +540,12 @@ export class PhotosView extends ItemView {
 		const [year, month, day] = dateString.split('/').map(Number);
 		const date = new Date(year, month - 1, day);
 		
-		return date.getFullYear() === year && 
+		const isValid = date.getFullYear() === year && 
 			   date.getMonth() === month - 1 && 
 			   date.getDate() === day;
+		
+		console.log('Date validation for', dateString, ':', isValid);
+		return isValid;
 	}
 
 	private showDatePicker(dateInput: HTMLInputElement) {
