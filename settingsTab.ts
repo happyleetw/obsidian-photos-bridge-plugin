@@ -79,10 +79,21 @@ export class PhotosBridgeSettingTab extends PluginSettingTab {
 			.setName('媒體資料夾')
 			.setDesc('儲存匯入照片和影片的資料夾名稱')
 			.addText(text => text
-				.setPlaceholder('attachments')
+				.setPlaceholder('Media')
 				.setValue(this.plugin.settings.mediaFolder)
 				.onChange(async (value) => {
 					this.plugin.settings.mediaFolder = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('掃描資料夾')
+			.setDesc('掃描日記筆記的資料夾路徑，用於檢查照片使用情況')
+			.addText(text => text
+				.setPlaceholder('Me/Diary')
+				.setValue(this.plugin.settings.scanFolder)
+				.onChange(async (value) => {
+					this.plugin.settings.scanFolder = value;
 					await this.plugin.saveSettings();
 				}));
 

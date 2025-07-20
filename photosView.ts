@@ -532,7 +532,7 @@ export class PhotosView extends ItemView {
 			if (dateParts.length !== 3) return;
 			
 			const [year, month] = dateParts;
-			const diaryPath = `Me/Diary/${year}/${year}-${month}`;
+			const diaryPath = `${this.plugin.settings.scanFolder}/${year}/${year}-${month}`;
 			
 			console.log(`掃描目錄: ${diaryPath}`);
 			

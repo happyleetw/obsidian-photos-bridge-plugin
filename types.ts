@@ -52,6 +52,7 @@ export interface BridgeHealthResponse {
 export interface PhotosBridgeSettings {
 	bridgeUrl: string;
 	mediaFolder: string;
+	scanFolder: string; // 掃描資料夾路徑
 	autoCreateMediaFolder: boolean;
 	defaultFilenameFormat: string;
 	thumbnailSize: number;
@@ -63,7 +64,8 @@ export interface PhotosBridgeSettings {
 
 export const DEFAULT_SETTINGS: PhotosBridgeSettings = {
 	bridgeUrl: 'http://localhost:44556',
-	mediaFolder: 'attachments',
+	mediaFolder: 'Media',
+	scanFolder: 'Me/Diary',
 	autoCreateMediaFolder: true,
 	defaultFilenameFormat: 'original', // 'original', 'timestamp', 'custom'
 	thumbnailSize: 150,
