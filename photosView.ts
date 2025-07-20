@@ -104,11 +104,10 @@ export class PhotosView extends ItemView {
 			cls: 'photos-bridge-date-input'
 		});
 
-		// Calendar button
-		const calendarBtn = dateInputContainer.createEl('button', {
-			cls: 'photos-bridge-calendar-btn',
-			text: '📅'
-		});
+		// Restore previous date value if exists
+		if (this.uiState.filter.dateFilter) {
+			dateInput.value = this.uiState.filter.dateFilter;
+		}
 
 		// Search button
 		const searchBtn = dateInputContainer.createEl('button', {
@@ -137,11 +136,6 @@ export class PhotosView extends ItemView {
 			if (e.key === 'Enter') {
 				this.performDateSearch(dateInput.value);
 			}
-		});
-
-		// Calendar button click
-		calendarBtn.addEventListener('click', () => {
-			this.showDatePicker(dateInput);
 		});
 
 		// Search button click
@@ -546,64 +540,6 @@ export class PhotosView extends ItemView {
 		
 		console.log('Date validation for', dateString, ':', isValid);
 		return isValid;
-	}
-
-	private showDatePicker(dateInput: HTMLInputElement) {
-		// Create a simple date picker modal
-		const modal = document.createElement('div');
-		modal.className = 'photos-bridge-date-picker-modal';
-		
-		const overlay = document.createElement('div');
-		overlay.className = 'photos-bridge-date-picker-overlay';
-		
-		const picker = document.createElement('input');
-		picker.type = 'date';
-		picker.className = 'photos-bridge-date-picker';
-		
-		// Set current value if exists
-		if (dateInput.value) {
-			const dateStr = dateInput.value.replace(/\//g, '-');
-			picker.value = dateStr;
-		}
-		
-		const buttonContainer = document.createElement('div');
-		buttonContainer.className = 'photos-bridge-date-picker-buttons';
-		
-		const confirmBtn = document.createElement('button');
-		confirmBtn.textContent = '確認';
-		confirmBtn.className = 'photos-bridge-date-picker-confirm';
-		
-		const cancelBtn = document.createElement('button');
-		cancelBtn.textContent = '取消';
-		cancelBtn.className = 'photos-bridge-date-picker-cancel';
-		
-		buttonContainer.appendChild(confirmBtn);
-		buttonContainer.appendChild(cancelBtn);
-		
-		modal.appendChild(picker);
-		modal.appendChild(buttonContainer);
-		overlay.appendChild(modal);
-		document.body.appendChild(overlay);
-		
-		// Event handlers
-		confirmBtn.addEventListener('click', () => {
-			if (picker.value) {
-				const formattedDate = picker.value.replace(/-/g, '/');
-				dateInput.value = formattedDate;
-				this.performDateSearch(formattedDate);
-			}
-			document.body.removeChild(overlay);
-		});
-		
-		cancelBtn.addEventListener('click', () => {
-			document.body.removeChild(overlay);
-		});
-		
-		overlay.addEventListener('click', (e) => {
-			if (e.target === overlay) {
-				document.body.removeChild(overlay);
-			}
-		});
 	}
 
 	private async insertPhoto(photo: PhotoModel) {
