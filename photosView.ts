@@ -317,22 +317,7 @@ export class PhotosView extends ItemView {
 			photoEl.classList.remove('photos-bridge-dragging');
 		});
 
-		// Click handler - also keep click functionality as backup
-		photoEl.addEventListener('click', async (e) => {
-			e.preventDefault();
-			
-			// Add visual feedback
-			photoEl.classList.add('photos-bridge-clicking');
-			
-			try {
-				await this.insertPhoto(photo);
-			} finally {
-				// Remove visual feedback after a short delay
-				setTimeout(() => {
-					photoEl.classList.remove('photos-bridge-clicking');
-				}, 200);
-			}
-		});
+
 
 		// Context menu
 		photoEl.addEventListener('contextmenu', (e) => {
